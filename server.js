@@ -1,112 +1,187 @@
-// server.js (Back-End Node.js/Express yang Diperbarui)
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser'); // Untuk parsing POST requests
-const whois = require('whois');            // Untuk WHOIS Lookup
-const gtts = require('gtts');              // Untuk Text-to-Speech
-const fs = require('fs');                  // Untuk File System (Membuat File)
+const bodyParser = require('body-parser');
+const fs = require('fs');
 const path = require('path');
+const whois = require('node-whois');
+const gtts = require('gtts'); // Google Text-to-Speech
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
+const API_VERSION = 'v1.0.0 (Production)';
+const API_NAME = 'DIZI API Gateway';
 
-// Middleware
-app.use(cors()); 
+// --- MIDDLEWARE ---
+
+// Konfigurasi CORS: Mengizinkan semua origin untuk memudahkan deployment awal.
+// Dalam produksi nyata, ganti '*' dengan domain spesifik Anda (misalnya: 'https://dizital.privhandi.my.id')
+app.use(cors({ origin: '*' })); 
+
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/public', express.static(path.join(__dirname, 'public'))); // Untuk melayani file TTS
+// Tambahkan middleware untuk melayani file statis (untuk file TTS dan File Creator)
+app.use('/static', express.static(path.join(__dirname, 'static'))); 
 
-// Pastikan folder public ada untuk menyimpan file TTS
-if (!fs.existsSync('public')) {
-    fs.mkdirSync('public');
+// Buat direktori 'static' jika belum ada
+if (!fs.existsSync(path.join(__dirname, 'static'))) {
+    fs.mkdirSync(path.join(__dirname, 'static'));
 }
 
-// Data Dummy
-const musicTracks = {
-    'terimakasih': {
-        id: 'terimakasih',
-        title: 'Terima Kasih Metadata',
-        artist: 'DIZI Official',
-        duration_ms: 180000, 
-        status: '200 OK - SUCCESS'
-    }
-};
 
-// ===========================================
-// ENDPOINT 1: Status Sistem (Dashboard)
-// ===========================================
-app.get('/api/v1/status', (req, res) => {
-    // ... (Logika status sistem yang sama) ...
-    const latency = Math.floor(Math.random() * 50) + 5; 
-    const activeUsers = Math.floor(Math.random() * 500) + 100;
+// --- API ENDPOINTS (ROUTE /api/v1) ---
+
+const router = express.Router();
+
+// 1. Endpoint Status (Dashboard) - GET /api/v1/status
+router.get('/status', (req, res) => {
+    // Simulasi Latency
+    const latency = Math.floor(Math.random() * 50) + 10; 
+
     res.json({
-        service_name: 'DIZI Advanced API Gateway',
-        version: 'v3.0.0-PRO',
+        service_name: API_NAME,
+        version: API_VERSION,
+        system_status: 'OPERATIONAL',
         current_time: new Date().toISOString(),
         api_latency_ms: latency,
-        active_connections: activeUsers,
-        system_status: 'OPERATIONAL',
-        note: 'API is now integrated with real external tools (TTS, WHOIS).'
+        active_connections: Math.floor(Math.random() * 10) + 1,
+        note: 'API is running and ready to handle requests on port ' + PORT,
     });
 });
 
-// ===========================================
-// ENDPOINT 2: Music Track Lookup (API Test)
-// ===========================================
-app.get('/api/v1/track/:id', (req, res) => {
-    // ... (Logika track yang sama) ...
-    const track = musicTracks[req.params.id.toLowerCase()];
-    if (track) {
-        setTimeout(() => res.json(track), 500); 
-    } else {
-        res.status(404).json({ error: 'Resource Not Found', message: 'Resource ID tidak ditemukan.' });
+// 2. Endpoint Track (Docs Test) - GET /api/v1/track/:id
+router.get('/track/:id', (req, res) => {
+    if (req.params.id === 'nonexistent') {
+        // Simulasi 404 Error (Untuk halaman FAQ)
+        return res.status(404).json({
+            status: 'error',
+            code: 404,
+            message: `Resource with ID '${req.params.id}' not found in the database.`,
+            suggestion: 'Check your endpoint ID.',
+        });
     }
+
+    // Simulasi 200 OK
+    res.json({
+        status: 'success',
+        id: req.params.id,
+        title: `Track Metadata for ${req.params.id.toUpperCase()}`,
+        artist: 'DIZI Developer',
+        duration_ms: 120000,
+        retrieved_at: new Date().toISOString(),
+    });
 });
 
-// ===========================================
-// ENDPOINT 3 (NYATA): Text-to-Speech (TTS)
-// ===========================================
-app.post('/api/v1/tools/tts', async (req, res) => {
-    const text = req.body.text || 'Teks kosong, tidak bisa diubah menjadi suara.';
-    const lang = req.body.lang || 'id'; // Default Bahasa Indonesia
-    
-    // Gunakan hash atau timestamp unik untuk nama file
-    const filename = `tts_${Date.now()}.mp3`;
-    const filepath = path.join(__dirname, 'public', filename);
+// --- TOOLS ENDPOINTS (POST /api/v1/tools/...) ---
+
+// 3. TTS Generator - POST /api/v1/tools/tts
+router.post('/tools/tts', (req, res) => {
+    const { text, lang = 'en' } = req.body;
+    if (!text) {
+        return res.status(400).json({ status: 'error', message: 'Teks tidak boleh kosong.' });
+    }
 
     try {
-        const gttsInstance = new gtts(text, lang);
+        const timestamp = Date.now();
+        const filename = `tts_${timestamp}.mp3`;
+        const filepath = path.join(__dirname, 'static', filename);
         
-        // Simpan file TTS secara fisik
-        await new Promise((resolve, reject) => {
-            gttsInstance.save(filepath, function(err, result) {
-                if (err) return reject(err);
-                resolve(result);
-            });
-        });
+        const gtts_instance = new gtts(text, lang);
         
-        // Kirim URL ke file yang baru dibuat
-        const streamUrl = `https://dizital.privhandi.my.id/public/${filename}`;
-        res.json({
-            status: 'success',
-            message: 'TTS file created successfully.',
-            stream_url: streamUrl
+        gtts_instance.save(filepath, (err, result) => {
+            if (err) {
+                console.error('gTTS Error:', err);
+                return res.status(500).json({ status: 'error', message: 'Gagal membuat file TTS (gTTS error).' });
+            }
+            // URL untuk diakses dari front-end
+            const streamUrl = `${req.protocol}://${req.get('host')}/static/${filename}`;
+            res.json({ status: 'success', message: 'File TTS berhasil dibuat.', filename, stream_url: streamUrl });
         });
-
     } catch (error) {
-        console.error('TTS Error:', error);
-        res.status(500).json({ status: 'error', message: 'Gagal membuat file TTS.', detail: error.message });
+        console.error('TTS General Error:', error);
+        res.status(500).json({ status: 'error', message: 'Terjadi kesalahan internal saat memproses TTS.' });
     }
 });
 
-// ===========================================
-// ENDPOINT 4 (NYATA): WHOIS Lookup
-// ===========================================
-app.post('/api/v1/tools/whois', (req, res) => {
-    const domain = req.body.domain;
+// 4. WHOIS Domain Lookup - POST /api/v1/tools/whois
+router.post('/tools/whois', async (req, res) => {
+    const { domain } = req.body;
     if (!domain) {
-        return res.status(400).json({ status: 'error', message: 'Domain diperlukan.' });
+        return res.status(400).json({ status: 'error', message: 'Domain tidak boleh kosong.' });
     }
+
+    try {
+        // whois lookup options
+        const options = { timeout: 5000 }; 
+        const result = await whois.lookup(domain, options);
+        
+        res.json({
+            status: 'success',
+            query_domain: domain,
+            message: 'Informasi WHOIS berhasil diambil. Lihat di Console Browser.',
+            raw_data: result, // data dikirim ke front-end untuk log console
+        });
+    } catch (error) {
+        console.error('WHOIS Error:', error);
+        res.status(500).json({ status: 'error', message: `Gagal melakukan WHOIS lookup untuk domain ${domain}.` });
+    }
+});
+
+// 5. File Creator - POST /api/v1/tools/createfile
+router.post('/tools/createfile', (req, res) => {
+    const { filename, content } = req.body;
+    
+    if (!filename || !content) {
+        return res.status(400).json({ status: 'error', message: 'Nama file dan konten tidak boleh kosong.' });
+    }
+
+    try {
+        const filepath = path.join(__dirname, 'static', filename);
+        
+        // Memastikan tidak menimpa file kritis dengan path traversal
+        if (!filepath.startsWith(path.join(__dirname, 'static'))) {
+             return res.status(400).json({ status: 'error', message: 'Invalid file path.' });
+        }
+
+        fs.writeFileSync(filepath, content, 'utf8');
+        
+        const downloadUrl = `${req.protocol}://${req.get('host')}/static/${filename}`;
+        
+        res.json({ 
+            status: 'success', 
+            message: `File '${filename}' berhasil dibuat di server.`, 
+            download_url: downloadUrl 
+        });
+        
+    } catch (error) {
+        console.error('File Creator Error:', error);
+        res.status(500).json({ status: 'error', message: 'Gagal membuat file di server.' });
+    }
+});
+
+
+// Hubungkan router ke path /api/v1
+app.use('/api/v1', router);
+
+// Handle 404 untuk semua route API yang tidak terdefinisi
+app.use('/api/v1/*', (req, res) => {
+    res.status(404).json({
+        status: 'error',
+        code: 404,
+        message: 'Endpoint tidak ditemukan di API v1.',
+        path: req.originalUrl
+    });
+});
+
+
+// --- SERVER START ---
+app.listen(PORT, () => {
+    console.log(`\n==============================================`);
+    console.log(`  DIZI API Gateway Server Aktif!`);
+    console.log(`  Version: ${API_VERSION}`);
+    console.log(`  Port: ${PORT}`);
+    console.log(`  URL Lokal: http://localhost:${PORT}`);
+    console.log(`  Siap diakses dari dizital.privhandi.my.id`);
+    console.log(`==============================================\n`);
+});    }
 
     // Panggil library WHOIS nyata
     whois.lookup(domain, function(err, data) {
