@@ -4,7 +4,428 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DIZI Developer Portfolio - REST API Gateway</title>
-  <link rel="stylesheet" href="./css/style.css"> 
+  <!-- Font Eksternal untuk gaya Cyberpunk/Holographic -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;600&display=swap" rel="stylesheet">
+  
+  <style>
+    /* css/style.css - Styling Holographic */
+    
+    /* --- VARIABEL DASAR --- */
+    :root {
+        --color-primary: #121212;
+        --color-secondary: #222233;
+        --color-accent: #00e5ff; /* Cyan/Biru Neon */
+        --color-glow-secondary: #ff00ff; /* Magenta Neon */
+        --color-error: #ff4136; /* Merah */
+        --color-text-light: #e0e0e0;
+        --color-text-dark: #333;
+        --font-sans: 'Inter', sans-serif;
+        --font-display: 'Share Tech Mono', monospace;
+        --weather-filter: saturate(1.2) brightness(1.1);
+    }
+
+    /* --- GLOBAL RESET & BODY --- */
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        background-color: var(--color-primary);
+        color: var(--color-text-light);
+        min-height: 100vh;
+        display: flex;
+        overflow: hidden; 
+        align-items: stretch;
+        transition: filter 1s ease-in-out;
+        filter: var(--weather-filter);
+    }
+
+    /* --- OVERLAY & CUACA --- */
+    .particle-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        background: radial-gradient(circle, rgba(0,229,255,0.05) 0%, rgba(18,18,18,0) 70%);
+        z-index: 10;
+    }
+
+    #weather-toggle {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(40, 40, 80, 0.7);
+        color: var(--color-accent);
+        border: 1px solid var(--color-accent);
+        padding: 8px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 100;
+        font-size: 0.9em;
+        box-shadow: 0 0 5px var(--color-accent);
+        transition: all 0.3s;
+    }
+
+    #weather-toggle:hover {
+        box-shadow: 0 0 15px var(--color-accent);
+    }
+
+    /* Simulasi Hujan/Salju (CSS Particle) */
+    .precipitation {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 9;
+    }
+    
+    /* Menggunakan linear-gradient atau background-image placeholder untuk simulasi */
+    .precipitation.rain {
+        background-image: repeating-linear-gradient(45deg, rgba(0, 100, 255, 0.5) 0px, transparent 1px, transparent 20px);
+        background-size: 100px 500px;
+        animation: rain-fall 0.6s linear infinite; 
+    }
+
+    .precipitation.snow {
+        background-image: repeating-radial-gradient(circle, rgba(255, 255, 255, 0.8) 0px, transparent 1px, transparent 10px);
+        background-size: 50px 50px;
+        animation: snow-fall 3s linear infinite; 
+    }
+
+    @keyframes rain-fall {
+        0% { background-position: 0 0; }
+        100% { background-position: 100px 500px; }
+    }
+    @keyframes snow-fall {
+        0% { background-position: 0 0; }
+        100% { background-position: 0 600px; }
+    }
+
+
+    /* --- APP SHELL & LAYOUT --- */
+    .app-shell {
+        display: flex;
+        width: 100%;
+        max-width: 1400px;
+        margin: 30px auto;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 50px rgba(0, 229, 255, 0.5); /* Shadow Holographic */
+        border: 1px solid var(--color-accent);
+        background: var(--color-secondary);
+    }
+
+    /* --- SIDEBAR --- */
+    .sidebar {
+        width: 250px;
+        min-height: 800px;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.5);
+        border-right: 1px solid var(--color-accent);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .sidebar-header {
+        font-family: var(--font-display);
+        font-size: 1.5em;
+        color: var(--color-glow-secondary);
+        text-align: center;
+        margin-bottom: 30px;
+        text-shadow: 0 0 10px var(--color-glow-secondary);
+        border-bottom: 2px dashed rgba(255, 0, 255, 0.3);
+        padding-bottom: 10px;
+    }
+
+    .nav-item {
+        padding: 15px 20px;
+        margin-bottom: 8px;
+        text-decoration: none;
+        color: var(--color-text-light);
+        border-radius: 10px;
+        transition: all 0.3s;
+        font-family: var(--font-display);
+        font-size: 1.1em;
+    }
+
+    .nav-item:hover {
+        background: rgba(0, 229, 255, 0.1);
+        color: var(--color-accent);
+        transform: translateX(5px);
+    }
+
+    .nav-item.active {
+        background: var(--color-accent);
+        color: var(--color-primary);
+        font-weight: 600;
+        box-shadow: 0 0 15px var(--color-accent);
+    }
+
+    /* --- CONTENT AREA & PAGES --- */
+    .content-area {
+        flex-grow: 1;
+        padding: 40px;
+        overflow-y: auto;
+    }
+
+    .page {
+        display: none;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    .page.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .content-title {
+        font-family: var(--font-display);
+        font-size: 2em;
+        color: var(--color-accent);
+        margin-bottom: 30px;
+        text-shadow: 0 0 5px var(--color-accent);
+    }
+
+    /* --- MODULE CARD (Komponen UI Utama) --- */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .module-card {
+        background: rgba(40, 40, 80, 0.7);
+        padding: 25px;
+        border-radius: 15px;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .module-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 25px rgba(0, 229, 255, 0.2);
+    }
+
+    .module-card h3 {
+        font-family: var(--font-display);
+        color: var(--color-glow-secondary);
+        margin-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 0, 255, 0.2);
+        padding-bottom: 5px;
+    }
+
+    /* --- API STATUS BOX --- */
+    .api-status-box {
+        margin-top: 15px;
+        padding: 10px;
+        border-radius: 5px;
+        font-family: var(--font-display);
+        font-size: 0.9em;
+        border: 1px solid #444;
+        color: var(--color-text-light);
+    }
+
+    .api-status-box.loading {
+        background: rgba(0, 229, 255, 0.1);
+        color: var(--color-accent);
+        border-color: var(--color-accent);
+        animation: pulse 1.5s infinite;
+    }
+
+    .api-status-box.success {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border-color: #00ffaa;
+    }
+
+    .api-status-box.error {
+        background: rgba(255, 65, 54, 0.1);
+        color: var(--color-error);
+        border-color: var(--color-error);
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 229, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0); }
+    }
+
+    /* --- BUTTONS & INPUTS --- */
+    #call-api-btn, #faq-call-api-btn, .dl-btn {
+        font-family: var(--font-display);
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    #call-api-btn {
+        background: linear-gradient(90deg, var(--color-accent), #00aaff);
+        color: var(--color-primary);
+        box-shadow: 0 0 10px var(--color-accent);
+    }
+    #call-api-btn:hover:not(:disabled) {
+        background: var(--color-text-light);
+        box-shadow: 0 0 20px var(--color-accent);
+    }
+
+    #faq-call-api-btn {
+        background: linear-gradient(90deg, var(--color-error), #ff6b6b);
+        color: white;
+        box-shadow: 0 0 10px var(--color-error);
+    }
+
+    .full-width-input, textarea {
+        padding: 12px 15px;
+        border-radius: 5px;
+        border: 1px solid var(--color-accent);
+        background: rgba(0, 0, 0, 0.4);
+        color: var(--color-text-light);
+        font-size: 1em;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .downloader-controls {
+        display: grid;
+        grid-template-columns: 3fr 1fr; /* Untuk WHOIS */
+        gap: 10px;
+        align-items: center;
+    }
+
+    .dl-btn {
+        background: var(--color-accent);
+        color: var(--color-primary);
+    }
+
+    /* --- ERROR PAGE --- */
+    #error-page {
+        text-align: center;
+        padding-top: 150px;
+    }
+    .error-code {
+        font-family: var(--font-display);
+        font-size: 8em;
+        color: var(--color-error);
+        text-shadow: 0 0 20px var(--color-error);
+    }
+    .error-message {
+        font-family: var(--font-display);
+        font-size: 2em;
+        color: var(--color-glow-secondary);
+    }
+
+    /* --- HOLOGRAPHIC CARD PROFILE (About Dev) --- */
+    .profile-card {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 350px; 
+        background: none;
+        box-shadow: none;
+        border: none;
+        perspective: 1000px;
+    }
+
+    .holographic-card {
+        width: 300px;
+        height: 200px;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 1s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transform: rotateY(15deg) rotateX(5deg);
+    }
+
+    .profile-card:hover .holographic-card {
+        transform: rotateY(175deg) rotateX(-5deg);
+    }
+
+    .card-front, .card-back {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        backface-visibility: hidden; 
+        border-radius: 15px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        box-shadow: 0 0 30px var(--color-accent);
+        border: 2px solid var(--color-accent);
+    }
+
+    .card-front {
+        background: rgba(40, 40, 80, 0.95);
+        z-index: 2;
+    }
+
+    .card-back {
+        background: rgba(80, 40, 80, 0.95);
+        transform: rotateY(180deg); 
+        color: var(--color-glow-secondary);
+        border: 2px solid var(--color-glow-secondary);
+    }
+
+    .profile-name {
+        font-family: var(--font-display);
+        font-size: 1.5em;
+        color: var(--color-accent);
+        text-shadow: 0 0 10px var(--color-accent);
+        margin-bottom: 5px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .app-shell {
+            flex-direction: column;
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            max-width: 100%;
+        }
+        .sidebar {
+            width: 100%;
+            min-height: auto;
+            border-right: none;
+            border-bottom: 1px solid var(--color-accent);
+            flex-direction: row;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .nav-item {
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 0.9em;
+        }
+        .content-area {
+            padding: 20px 15px;
+        }
+        .content-title {
+            font-size: 1.5em;
+        }
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+  </style>
 </head>
 <body>
     
@@ -25,6 +446,7 @@
 
     <main class="content-area">
       
+      <!-- Halaman 1: Dashboard -->
       <section id="home-page" class="page active">
         <h2 class="content-title">DIZI API System Dashboard | Status Jaringan</h2>
         <div class="dashboard-grid" id="dashboard-data">
@@ -32,8 +454,10 @@
         </div>
       </section>
 
+      <!-- Halaman 2: API Docs -->
       <section id="docs-api" class="page">
         <h2 class="content-title">DIZI API Documentation | Live Call Test</h2>
+        
         <div class="module-card">
             <h3>Endpoint Test: /api/v1/track/{id}</h3>
             <p>Panggil API untuk mendapatkan metadata (Simulasi Endpoint 200 OK).</p>
@@ -43,40 +467,46 @@
                 Klik tombol di atas untuk memanggil API.
             </pre>
         </div>
+
+        <div class="module-card" style="margin-top: 20px;">
+             <h3>API Tools Documentation</h3>
+             <p>Detail lengkap tentang penggunaan `POST /tools/tts`, `POST /tools/whois`, dan `POST /tools/createfile` dapat dilihat di dokumen eksternal, atau uji langsung di halaman **🛠️ Tools & DL**.</p>
+        </div>
       </section>
       
+      <!-- Halaman 3: Tools & Downloader -->
       <section id="tools-page" class="page">
-    <h2 class="content-title">🛠️ Developer Tools & Downloader Gateway (100% WORKS API)</h2>
+        <h2 class="content-title">🛠️ Developer Tools & Downloader Gateway (100% WORKS API)</h2>
 
-    <div class="module-card">
-        <h3>1. Text-to-Speech (TTS) Generator (NYATA)</h3>
-        <p>Input teks, dan API akan membuat file audio MP3 di server.</p>
-        <input type="text" id="tts-input" placeholder="Masukkan teks yang ingin diubah menjadi suara..." class="full-width-input">
-        <button id="tts-btn" class="dl-btn">Convert to MP3 (POST /api/v1/tools/tts)</button>
-        <div id="tts-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
-    </div>
-    
-    <div class="module-card">
-        <h3>2. WHOIS Domain Lookup (NYATA)</h3>
-        <p>Ambil informasi pendaftar domain secara *real-time*.</p>
-        <div class="downloader-controls">
-            <input type="text" id="whois-input" placeholder="Masukkan domain (contoh: google.com)" class="full-width-input">
-            <button id="whois-btn" class="dl-btn" style="grid-column: span 1;">Lookup (POST /api/v1/tools/whois)</button>
+        <div class="module-card">
+            <h3>1. Text-to-Speech (TTS) Generator (NYATA)</h3>
+            <p>Input teks, dan API akan membuat file audio MP3 di server. (*Memerlukan server.js aktif*)</p>
+            <input type="text" id="tts-input" placeholder="Masukkan teks yang ingin diubah menjadi suara..." class="full-width-input">
+            <button id="tts-btn" class="dl-btn">Convert to MP3 (POST /api/v1/tools/tts)</button>
+            <div id="tts-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
         </div>
-        <div id="whois-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
-    </div>
+        
+        <div class="module-card">
+            <h3>2. WHOIS Domain Lookup (NYATA)</h3>
+            <p>Ambil informasi pendaftar domain secara *real-time*. (*Memerlukan server.js aktif*)</p>
+            <div class="downloader-controls">
+                <input type="text" id="whois-input" placeholder="Masukkan domain (contoh: google.com)" class="full-width-input">
+                <button id="whois-btn" class="dl-btn" style="grid-column: span 1;">Lookup (POST /api/v1/tools/whois)</button>
+            </div>
+            <div id="whois-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+        </div>
 
-    <div class="module-card">
-        <h3>3. File Creator (NYATA)</h3>
-        <p>API akan membuat file fisik di server dengan konten ini.</p>
-        <input type="text" id="file-name-input" placeholder="Nama File (contoh: halo.html)" class="full-width-input" style="margin-bottom: 10px;">
-        <textarea id="file-content-input" placeholder="Tulis konten file di sini (contoh: <h1>Halo Dunia</h1>)" class="full-width-input" rows="5"></textarea>
-        <button id="file-creator-btn" class="dl-btn">Create File (POST /api/v1/tools/createfile)</button>
-        <div id="file-creator-status" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
-    </div>
-
+        <div class="module-card">
+            <h3>3. File Creator (NYATA)</h3>
+            <p>API akan membuat file fisik di server dengan konten ini. (*Memerlukan server.js aktif*)</p>
+            <input type="text" id="file-name-input" placeholder="Nama File (contoh: halo.html)" class="full-width-input" style="margin-bottom: 10px;">
+            <textarea id="file-content-input" placeholder="Tulis konten file di sini (contoh: <h1>Halo Dunia</h1>)" class="full-width-input" rows="5"></textarea>
+            <button id="file-creator-btn" class="dl-btn">Create File (POST /api/v1/tools/createfile)</button>
+            <div id="file-creator-status" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+        </div>
       </section>
 
+      <!-- Halaman 4: About Dev -->
       <section id="about-dev" class="page">
         <h2 class="content-title">About The Developer | Holographic Profile</h2>
         <div class="module-card profile-card">
@@ -99,6 +529,7 @@
         </div>
       </section>
 
+      <!-- Halaman 5: FAQ & Error Simulation -->
       <section id="faq" class="page">
         <h2 class="content-title">Frequently Asked Questions | API Testing (Error Handling)</h2>
         <div class="module-card"><h3>Q: Apakah API-nya nyata?</h3><p>A: Ya! API (server.js) berjalan di Node.js dan dihubungkan ke *front-end* ini melalui `fetch()` dan CORS, menjadikannya aplikasi *full-stack* yang berfungsi.</p></div>
@@ -114,6 +545,7 @@
         </div>
       </section>
       
+      <!-- Halaman 6: Error Route (Jika navigasi ke jalur tidak dikenal) -->
       <section id="error-page" class="page">
         <div class="error-code">404</div>
         <div class="error-message">SYSTEM OFFLINE: ROUTE NOT FOUND</div>
@@ -124,6 +556,309 @@
     </main>
   </div>
 
-  <script type="module" src="./js/app.js"></script>
+  <script>
+    // js/app.js - Logika Aplikasi 100% Bekerja
+
+    // --- KONFIGURASI GLOBAL ---
+    // JANGAN UBAH INI UNTUK LOKAL! API harus berjalan di http://localhost:3000
+    const API_BASE_URL = 'http://dizital.privhandi.my.id/api/v1'; 
+
+    // --- ELEMEN UTAMA ---
+    const root = document.documentElement;
+    const weatherToggle = document.getElementById("weather-toggle");
+    const precipitationElement = document.getElementById("precipitation");
+    const navItems = document.querySelectorAll('.nav-item');
+    const pages = document.querySelectorAll('.page');
+
+    const callApiBtn = document.getElementById('call-api-btn');
+    const apiStatusBox = document.getElementById('api-status-box');
+    const apiResponseData = document.getElementById('api-response-data');
+    const faqCallApiBtn = document.getElementById('faq-call-api-btn');
+    const faqStatusBox = document.getElementById('faq-api-status-box');
+    const faqResponseData = document.getElementById('faq-api-response-data');
+
+    const ttsInput = document.getElementById('tts-input');
+    const ttsBtn = document.getElementById('tts-btn');
+    const ttsStatusBox = document.getElementById('tts-status-box');
+
+    const whoisInput = document.getElementById('whois-input');
+    const whoisBtn = document.getElementById('whois-btn');
+    const whoisStatusBox = document.getElementById('whois-status-box');
+
+    const fileNameInput = document.getElementById('file-name-input');
+    const fileContentInput = document.getElementById('file-content-input');
+    const fileCreatorBtn = document.getElementById('file-creator-btn');
+    const fileCreatorStatus = document.getElementById('file-creator-status');
+
+
+    // --- FUNGSI NAVIGASI DINAMIS ---
+    window.navigateTo = function(pageId) {
+        const validPages = Array.from(pages).map(p => p.id);
+        let targetPageId = validPages.includes(pageId) ? pageId : 'error-page';
+        
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-page') === pageId) {
+                item.classList.add('active');
+            }
+        });
+        
+        pages.forEach(page => page.classList.remove('active'));
+        document.getElementById(targetPageId).classList.add('active');
+
+        if (targetPageId === 'home-page') {
+            fetchDashboardData();
+        }
+    }
+
+    navItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            navigateTo(e.target.getAttribute('data-page'));
+        });
+    });
+
+    // --- FUNGSI API CALL DASHBOARD (System Status) ---
+    async function fetchDashboardData() {
+        const dashboardDataElement = document.getElementById('dashboard-data');
+        try {
+            const response = await fetch(`${API_BASE_URL}/status`);
+            const data = await response.json();
+            
+            dashboardDataElement.innerHTML = `
+                <div class="module-card">
+                    <h3>System Status | ${data.service_name}</h3>
+                    <p style="color: var(--color-accent);">Version: ${data.version}</p>
+                    <p>Status: <span style="color: #00ffaa; font-weight: 600;">${data.system_status}</span></p>
+                    <p>Current Time: ${new Date(data.current_time).toLocaleTimeString()}</p>
+                </div>
+                <div class="module-card">
+                    <h3>Performance Metrics</h3>
+                    <p>API Latency: <span style="color: var(--color-glow-secondary);">${data.api_latency_ms}ms</span></p>
+                    <p>Active Connections: ${data.active_connections}</p>
+                    <p>Note: ${data.note}</p>
+                </div>
+                <div class="module-card">
+                    <h3>Deployment Status</h3>
+                    <p>Back-End: Operational (Node.js)</p>
+                    <p>Front-End: Deployed via GitHub/Vercel (Simulated)</p>
+                    <p>Environment: Production Ready</p>
+                </div>
+            `;
+        } catch (error) {
+            dashboardDataElement.innerHTML = `<div class="module-card" style="color: var(--color-error);">
+                <h3>🚨 GAGAL KONEKSI API 🚨</h3>
+                <p>Penyebab: **Server API Anda (server.js) Belum Aktif atau Port 3000 Diblokir.**</p>
+                <p>Solusi: Jalankan \`node server.js\` di terminal dan JANGAN tutup.</p>
+            </div>`;
+        }
+    }
+
+    // --- FUNGSI API CALL 200 OK (DOCS) ---
+    async function fetchTrackApi() {
+        if (callApiBtn.disabled) return;
+        callApiBtn.disabled = true;
+        apiStatusBox.className = 'api-status-box loading';
+        apiStatusBox.innerHTML = '⚡ **CALLING API**... Initiating holographic connection... ⚡';
+        apiResponseData.innerText = 'Processing API response...';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/track/terimakasih`);
+            const data = await response.json();
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+            if (response.ok) {
+                apiResponseData.innerText = JSON.stringify(data, null, 2); 
+                apiStatusBox.className = 'api-status-box success';
+                apiStatusBox.innerHTML = '✅ **SUCCESS** - Metadata Retrieved (200 OK)';
+            } else {
+                apiResponseData.innerText = JSON.stringify(data, null, 2);
+                apiStatusBox.className = 'api-status-box error';
+                apiStatusBox.innerHTML = `❌ **ERROR** - Failed to retrieve data (${response.status})`;
+            }
+        } catch (error) {
+            apiResponseData.innerText = `ERROR: Gagal terhubung ke API Server. Detail: ${error.message}`;
+            apiStatusBox.className = 'api-status-box error';
+            apiStatusBox.innerHTML = '❌ **CONNECTION ERROR** - API Host Unreachable';
+        } finally {
+            callApiBtn.disabled = false;
+        }
+    }
+
+    // --- FUNGSI API CALL 404 (FAQ) ---
+    async function fetchFailedApi() {
+        if (faqCallApiBtn.disabled) return;
+
+        faqCallApiBtn.disabled = true;
+        faqStatusBox.className = 'api-status-box loading';
+        faqStatusBox.innerHTML = '⚡ **CALLING API**... Searching for non-existent resource... ⚡';
+        faqResponseData.innerText = 'Processing API response...';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/track/nonexistent`); 
+            const data = await response.json();
+            await new Promise(resolve => setTimeout(resolve, 1000)); 
+
+            faqResponseData.innerText = JSON.stringify(data, null, 2); 
+            faqStatusBox.className = 'api-status-box error';
+            faqStatusBox.innerHTML = `❌ **ERROR** - Resource Not Found (404)`;
+
+        } catch (error) {
+            faqResponseData.innerText = `ERROR: Gagal terhubung ke API Server. Detail: ${error.message}`;
+            faqStatusBox.className = 'api-status-box error';
+            faqStatusBox.innerHTML = '❌ **CONNECTION ERROR** - Host Unreachable';
+        } finally {
+            faqCallApiBtn.disabled = false;
+        }
+    }
+
+
+    // ===============================================
+    // --- FUNGSI API NYATA (TOOLS PAGE) ---
+    // ===============================================
+    // --- FUNGSI API TTS NYATA ---
+    async function handleTts() {
+        const text = ttsInput.value.trim();
+        if (!text) { ttsStatusBox.className = 'api-status-box error'; ttsStatusBox.innerHTML = '❌ Teks kosong!'; return; }
+        
+        ttsBtn.disabled = true;
+        ttsStatusBox.className = 'api-status-box loading';
+        ttsStatusBox.innerHTML = '⚡ **CALLING API**... Converting text to speech (gTTS)... ⚡';
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tools/tts`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, lang: 'id' })
+            });
+            const data = await response.json();
+            
+            if (response.ok) {
+                ttsStatusBox.className = 'api-status-box success';
+                ttsStatusBox.innerHTML = `✅ **SUCCESS**! Audio created on server. <a href="${data.stream_url}" target="_blank" style="color: var(--color-glow-secondary);">**KLIK UNTUK DENGAR**</a>`;
+            } else {
+                ttsStatusBox.className = 'api-status-box error';
+                ttsStatusBox.innerHTML = `❌ **ERROR**: ${data.message}`;
+            }
+        } catch (error) {
+            ttsStatusBox.className = 'api-status-box error';
+            ttsStatusBox.innerHTML = `❌ **CONNECTION ERROR**: Gagal menghubungi server TTS.`;
+        } finally {
+            ttsBtn.disabled = false;
+        }
+    }
+
+    // --- FUNGSI API WHOIS NYATA ---
+    async function handleWhois() {
+        const domain = whoisInput.value.trim();
+        if (!domain) { whoisStatusBox.className = 'api-status-box error'; whoisStatusBox.innerHTML = '❌ Domain kosong!'; return; }
+
+        whoisBtn.disabled = true;
+        whoisStatusBox.className = 'api-status-box loading';
+        whoisStatusBox.innerHTML = `⚡ **CALLING API**... Performing WHOIS lookup on ${domain}... ⚡`;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tools/whois`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ domain })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                whoisStatusBox.className = 'api-status-box success';
+                whoisStatusBox.innerHTML = `✅ **SUCCESS**! Domain: ${data.query_domain}. Data berhasil diambil. (Lihat Console)`;
+                console.log("------------------------------------------");
+                console.log(`WHOIS Lookup Results for: ${data.query_domain}`);
+                console.log(data.raw_data);
+                console.log("------------------------------------------");
+
+            } else {
+                whoisStatusBox.className = 'api-status-box error';
+                whoisStatusBox.innerHTML = `❌ **ERROR**: ${data.message}`;
+            }
+        } catch (error) {
+            whoisStatusBox.className = 'api-status-box error';
+            whoisStatusBox.innerHTML = `❌ **CONNECTION ERROR**: Gagal menghubungi server WHOIS.`;
+        } finally {
+            whoisBtn.disabled = false;
+        }
+    }
+
+    // --- FUNGSI API FILE CREATOR NYATA ---
+    async function handleFileCreation() {
+        const filename = fileNameInput.value.trim();
+        const content = fileContentInput.value;
+        
+        if (!filename || !content) {
+            fileCreatorStatus.className = 'api-status-box error';
+            fileCreatorStatus.innerHTML = '❌ Nama file dan konten tidak boleh kosong!';
+            return;
+        }
+
+        fileCreatorBtn.disabled = true;
+        fileCreatorStatus.className = 'api-status-box loading';
+        fileCreatorStatus.innerHTML = `⚡ **CALLING API**... Creating file ${filename} on server... ⚡`;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/tools/createfile`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename, content })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                fileCreatorStatus.className = 'api-status-box success';
+                fileCreatorStatus.innerHTML = `✅ **SUCCESS**! ${data.message} <a href="${data.download_url}" target="_blank" style="color: var(--color-glow-secondary);">**DOWNLOAD FILE**</a>`;
+            } else {
+                fileCreatorStatus.className = 'api-status-box error';
+                fileCreatorStatus.innerHTML = `❌ **ERROR**: ${data.message}`;
+            }
+        } catch (error) {
+            fileCreatorStatus.className = 'api-status-box error';
+            fileCreatorStatus.innerHTML = `❌ **CONNECTION ERROR**: Gagal menghubungi server.`;
+        } finally {
+            fileCreatorBtn.disabled = false;
+        }
+    }
+
+
+    // --- LOGIKA CUACA (Dipertahankan untuk UI/UX) ---
+    const weathers = [
+        { name: "Cerah", emoji: "☀️", filter: "saturate(1.2) brightness(1.1)", particle: "" },
+        { name: "Hujan", emoji: "🌧️", filter: "grayscale(0.2) brightness(0.6) contrast(1.2) hue-rotate(10deg)", particle: "rain" },
+        { name: "Salju", emoji: "❄️", filter: "grayscale(0.5) brightness(1.0) contrast(1.1) sepia(0.2)", particle: "snow" }
+    ];
+    let currentWeatherIndex = 0;
+
+    function changeWeather() {
+        currentWeatherIndex = (currentWeatherIndex + 1) % weathers.length;
+        const nextWeather = weathers[currentWeatherIndex];
+        root.style.setProperty('--weather-filter', nextWeather.filter);
+        weatherToggle.textContent = `${nextWeather.emoji} ${nextWeather.name}`;
+        precipitationElement.className = 'precipitation'; 
+        if (nextWeather.particle) { precipitationElement.classList.add(nextWeather.particle); }
+    }
+
+    if (weatherToggle) {
+      weatherToggle.addEventListener('click', changeWeather);
+    }
+
+
+    // --- EVENT LISTENERS INITIALIZATION ---
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Inisialisasi Dashboard
+        fetchDashboardData();
+        
+        // 2. API Call Tests
+        if (callApiBtn) { callApiBtn.addEventListener('click', fetchTrackApi); }
+        if (faqCallApiBtn) { faqCallApiBtn.addEventListener('click', fetchFailedApi); }
+
+        // 3. API Nyata Tools
+        if (ttsBtn) { ttsBtn.addEventListener('click', handleTts); }
+        if (whoisBtn) { whoisBtn.addEventListener('click', handleWhois); }
+        if (fileCreatorBtn) { fileCreatorBtn.addEventListener('click', handleFileCreation); }
+    });
+  </script>
 </body>
 </html>
