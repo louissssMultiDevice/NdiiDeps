@@ -86,7 +86,7 @@ app.post('/api/v1/tools/tts', async (req, res) => {
         });
         
         // Kirim URL ke file yang baru dibuat
-        const streamUrl = `https://dizital.privhandi.my.id:${PORT}/public/${filename}`;
+        const streamUrl = `https://dizital.privhandi.my.id/public/${filename}`;
         res.json({
             status: 'success',
             message: 'TTS file created successfully.',
@@ -146,7 +146,7 @@ app.post('/api/v1/tools/createfile', async (req, res) => {
         res.json({
             status: 'success',
             message: `File ${safeFilename} berhasil dibuat di server!`,
-            download_url: `https://dizital.privhandi.my.id:${PORT}/public/${safeFilename}`
+            download_url: `https://dizital.privhandi.my.id/public/${safeFilename}`
         });
 
     } catch (error) {
@@ -157,5 +157,5 @@ app.post('/api/v1/tools/createfile', async (req, res) => {
 
 
 app.listen(PORT, () => {
-    console.log(`DIZI API Server 100% WORKS berjalan di https://dizital.privhandi.my.id:${PORT}`);
+    console.log(`DIZI API Server 100% WORKS berjalan di https://dizital.privhandi.my.id`);
 });
