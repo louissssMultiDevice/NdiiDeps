@@ -46,39 +46,34 @@
       </section>
       
       <section id="tools-page" class="page">
-          <h2 class="content-title">🛠️ Developer Tools & Downloader Gateway</h2>
+    <h2 class="content-title">🛠️ Developer Tools & Downloader Gateway (100% WORKS API)</h2>
 
-          <div class="module-card">
-              <h3>1. Media Downloader Gateway (Simulated)</h3>
-              <p>Aplikasi ini dapat menangani berbagai sumber unduhan. Masukkan URL dan pilih format.</p>
-              <div class="downloader-controls">
-                  <input type="text" id="dl-url-input" placeholder="Masukkan URL (TikTok, YouTube, IG, Spotify, dll.)" class="full-width-input">
-                  <select id="dl-format-select" class="model-selector">
-                      <option value="mp4">Video HD (.mp4)</option>
-                      <option value="mp3">Audio (.mp3)</option>
-                      <option value="metadata">Metadata Only</option>
-                  </select>
-                  <button id="dl-start-btn" class="dl-btn">Start Download</button>
-              </div>
-              <div id="dl-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
-          </div>
-          
-          <div class="module-card">
-              <h3>2. Developer Tools (File & Utility Generator)</h3>
-              <p>Simulasi alat pengembangan dan pembuatan file.</p>
-              <div class="dev-tools-grid">
-                  <button class="tool-btn" data-tool="whois">🌐 WHOIS Lookup</button>
-                  <button class="tool-btn" data-tool="npm">📦 NPM Search</button>
-                  <button class="tool-btn" data-tool="tts">🗣️ Text-to-Speech (TTS)</button>
-                  <button class="tool-btn" data-tool="html2img">🖼️ HTML to Image</button>
+    <div class="module-card">
+        <h3>1. Text-to-Speech (TTS) Generator (NYATA)</h3>
+        <p>Input teks, dan API akan membuat file audio MP3 di server.</p>
+        <input type="text" id="tts-input" placeholder="Masukkan teks yang ingin diubah menjadi suara..." class="full-width-input">
+        <button id="tts-btn" class="dl-btn">Convert to MP3 (POST /api/v1/tools/tts)</button>
+        <div id="tts-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+    </div>
+    
+    <div class="module-card">
+        <h3>2. WHOIS Domain Lookup (NYATA)</h3>
+        <p>Ambil informasi pendaftar domain secara *real-time*.</p>
+        <div class="downloader-controls">
+            <input type="text" id="whois-input" placeholder="Masukkan domain (contoh: google.com)" class="full-width-input">
+            <button id="whois-btn" class="dl-btn" style="grid-column: span 1;">Lookup (POST /api/v1/tools/whois)</button>
+        </div>
+        <div id="whois-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+    </div>
 
-                  <button class="tool-btn file-creator-btn" data-file="html">📄 Create HTML</button>
-                  <button class="tool-btn file-creator-btn" data-file="css">🎨 Create CSS</button>
-                  <button class="tool-btn file-creator-btn" data-file="js">⚡ Create JS</button>
-                  <button class="tool-btn file-creator-btn" data-file="py">🐍 Create Python</button>
-              </div>
-              <div id="dev-tools-status" class="api-status-box" style="margin-top: 15px;">Status: Pilih alat...</div>
-          </div>
+    <div class="module-card">
+        <h3>3. File Creator (NYATA)</h3>
+        <p>API akan membuat file fisik di server dengan konten ini.</p>
+        <input type="text" id="file-name-input" placeholder="Nama File (contoh: halo.html)" class="full-width-input" style="margin-bottom: 10px;">
+        <textarea id="file-content-input" placeholder="Tulis konten file di sini (contoh: <h1>Halo Dunia</h1>)" class="full-width-input" rows="5"></textarea>
+        <button id="file-creator-btn" class="dl-btn">Create File (POST /api/v1/tools/createfile)</button>
+        <div id="file-creator-status" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+    </div>
 
       </section>
 
