@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIZI Developer Portfolio - REST API Gateway</title>
+  <link rel="stylesheet" href="./css/style.css"> 
+</head>
+<body>
+    
+  <div class="particle-overlay"></div>
+  <div id="precipitation" class="precipitation"></div>
+  <button id="weather-toggle">☀️ Cerah</button>
+
+  <div class="app-shell">
+    <nav class="sidebar">
+      <div class="sidebar-header">DIZI PORTFOLIO</div>
+      <a class="nav-item active" data-page="home-page">🏠 Dashboard</a>
+      <a class="nav-item" data-page="docs-api">📑 API Docs</a>
+      <a class="nav-item" data-page="tools-page">🛠️ Tools & DL</a>
+      <a class="nav-item" data-page="about-dev">👨‍💻 About Dev</a>
+      <a class="nav-item" data-page="faq">❓ FAQ</a>
+      <a class="nav-item" data-page="non-existent-route">❌ Simulate Error</a>
+    </nav>
+
+    <main class="content-area">
+      
+      <section id="home-page" class="page active">
+        <h2 class="content-title">DIZI API System Dashboard | Status Jaringan</h2>
+        <div class="dashboard-grid" id="dashboard-data">
+            <div class="module-card"><h3>Loading System Status...</h3></div>
+        </div>
+      </section>
+
+      <section id="docs-api" class="page">
+        <h2 class="content-title">DIZI API Documentation | Live Call Test</h2>
+        <div class="module-card">
+            <h3>Endpoint Test: /api/v1/track/{id}</h3>
+            <p>Panggil API untuk mendapatkan metadata (Simulasi Endpoint 200 OK).</p>
+            <button id="call-api-btn">Panggil API Sekarang (Live)</button>
+            <div id="api-status-box" class="api-status-box">Status: Ready to call API.</div>
+            <pre id="api-response-data" style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; color: #00ffaa; margin-top: 20px; max-height: 400px; overflow-y: auto;">
+                Klik tombol di atas untuk memanggil API.
+            </pre>
+        </div>
+      </section>
+      
+      <section id="tools-page" class="page">
+          <h2 class="content-title">🛠️ Developer Tools & Downloader Gateway</h2>
+
+          <div class="module-card">
+              <h3>1. Media Downloader Gateway (Simulated)</h3>
+              <p>Aplikasi ini dapat menangani berbagai sumber unduhan. Masukkan URL dan pilih format.</p>
+              <div class="downloader-controls">
+                  <input type="text" id="dl-url-input" placeholder="Masukkan URL (TikTok, YouTube, IG, Spotify, dll.)" class="full-width-input">
+                  <select id="dl-format-select" class="model-selector">
+                      <option value="mp4">Video HD (.mp4)</option>
+                      <option value="mp3">Audio (.mp3)</option>
+                      <option value="metadata">Metadata Only</option>
+                  </select>
+                  <button id="dl-start-btn" class="dl-btn">Start Download</button>
+              </div>
+              <div id="dl-status-box" class="api-status-box" style="margin-top: 15px;">Status: Ready</div>
+          </div>
+          
+          <div class="module-card">
+              <h3>2. Developer Tools (File & Utility Generator)</h3>
+              <p>Simulasi alat pengembangan dan pembuatan file.</p>
+              <div class="dev-tools-grid">
+                  <button class="tool-btn" data-tool="whois">🌐 WHOIS Lookup</button>
+                  <button class="tool-btn" data-tool="npm">📦 NPM Search</button>
+                  <button class="tool-btn" data-tool="tts">🗣️ Text-to-Speech (TTS)</button>
+                  <button class="tool-btn" data-tool="html2img">🖼️ HTML to Image</button>
+
+                  <button class="tool-btn file-creator-btn" data-file="html">📄 Create HTML</button>
+                  <button class="tool-btn file-creator-btn" data-file="css">🎨 Create CSS</button>
+                  <button class="tool-btn file-creator-btn" data-file="js">⚡ Create JS</button>
+                  <button class="tool-btn file-creator-btn" data-file="py">🐍 Create Python</button>
+              </div>
+              <div id="dev-tools-status" class="api-status-box" style="margin-top: 15px;">Status: Pilih alat...</div>
+          </div>
+
+      </section>
+
+      <section id="about-dev" class="page">
+        <h2 class="content-title">About The Developer | Holographic Profile</h2>
+        <div class="module-card profile-card">
+            <div class="holographic-card">
+                <div class="card-front">
+                    <h3 class="profile-name">YOUR NAME</h3>
+                    <p class="profile-title">System Architect / REST API Developer</p>
+                    <div class="profile-detail">Status: ONLINE (Deployed)</div>
+                    <div class="profile-detail">ID: DIZI-DEV-001</div>
+                </div>
+                <div class="card-back">
+                    <p>SKILLS: REST API, Node.js, JS, CSS 3D</p>
+                    <p>Focus: Performance & Scalability</p>
+                </div>
+            </div>
+        </div>
+        <div class="module-card">
+            <h3>Project Vision</h3>
+            <p>Portofolio ini menampilkan kemampuan pengembangan *full-stack* modern, berfokus pada: **Custom REST API Design**, *Real-time System Monitoring*, *Advanced Error Handling*, dan *Modern UI/UX*.</p>
+        </div>
+      </section>
+
+      <section id="faq" class="page">
+        <h2 class="content-title">Frequently Asked Questions | API Testing (Error Handling)</h2>
+        <div class="module-card"><h3>Q: Apakah API-nya nyata?</h3><p>A: Ya! API (server.js) berjalan di Node.js dan dihubungkan ke *front-end* ini melalui `fetch()` dan CORS, menjadikannya aplikasi *full-stack* yang berfungsi.</p></div>
+        
+        <div class="module-card">
+            <h3>API Error Simulation Test: /api/v1/track/nonexistent</h3>
+            <p>Uji kemampuan *error handling* sistem API saat memanggil *endpoint* yang tidak valid (Status 404):</p>
+            <button id="faq-call-api-btn" style="background: var(--color-error); color: white;">Panggil API (Harusnya Gagal)</button>
+            <div id="faq-api-status-box" class="api-status-box">Status: Ready to simulate error.</div>
+            <pre id="faq-api-response-data" style="background: rgba(0,0,0,0.5); padding: 15px; border-radius: 5px; color: var(--color-error); margin-top: 20px;">
+                Klik tombol di atas.
+            </pre>
+        </div>
+      </section>
+      
+      <section id="error-page" class="page">
+        <div class="error-code">404</div>
+        <div class="error-message">SYSTEM OFFLINE: ROUTE NOT FOUND</div>
+        <p>Akses ditolak. Silakan kembali ke jalur yang benar.</p>
+        <button onclick="navigateTo('home-page')" id="back-home-btn" style="margin-top: 20px; background: var(--color-accent); color: var(--color-primary); padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">Kembali ke Dashboard</button>
+      </section>
+      
+    </main>
+  </div>
+
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
